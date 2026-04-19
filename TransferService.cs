@@ -16,15 +16,18 @@ public interface ITransferService
 public sealed class TransferService : ITransferService
 {
     private readonly ILedgerRepository _ledgerRepository;
+    private readonly IPrefundRepository _prefundRepository;
     private readonly TransferSettings _settings;
     private readonly ILogger<TransferService> _logger;
 
     public TransferService(
         ILedgerRepository ledgerRepository,
+        IPrefundRepository prefundRepository,
         IOptions<TransferSettings> settings,
         ILogger<TransferService> logger)
     {
         _ledgerRepository = ledgerRepository;
+        _prefundRepository = prefundRepository;
         _settings = settings.Value;
         _logger = logger;
     }
@@ -38,42 +41,55 @@ public sealed class TransferService : ITransferService
         string? gluIdDestination = null;
 
         _logger.LogInformation(
-            "Transfer executing. EvolveId={EvolveId} Amount={Amount} WriteSourceDebit={WriteSourceDebit} WriteDestinationCredit={WriteDestinationCredit}",
-            message.EvolveId, amount, _settings.WRITE_SOURCE_DEBIT, _settings.WRITE_DESTINATION_CREDIT);
+            "Transfer executing. EvolveId={EvolveId} Amount={Amount} FintechId={FintechId}",
+            message.EvolveId, amount, message.FintechId);
 
         // -------------------------------------------------------------------------
-        // Debit source ledger
+        // Resolve RTPPrefund ledger from fintechId
+        // -------------------------------------------------------------------------
+        var prefund = await _prefundRepository.ResolvePrefundLedgerAsync(
+            message.FintechId, cancellationToken);
+
+        if (prefund is null)
+            throw new InvalidOperationException(
+                $"RTPPrefund account not found for FintechId={message.FintechId}");
+
+        _logger.LogInformation(
+            "RTPPrefund resolved. EvolveId={EvolveId} PrefundLedgerId={PrefundLedgerId} AccountNumber={AccountNumber}",
+            message.EvolveId, prefund.LedgerId, prefund.AccountNumber);
+
+        // -------------------------------------------------------------------------
+        // Debit RTPPrefund ledger
         // -------------------------------------------------------------------------
         if (_settings.WRITE_SOURCE_DEBIT)
         {
-            // Idempotency check — was this entry already written on a previous attempt?
+            // Idempotency check
             var sourceEntryExists = await _ledgerRepository.EntryExistsAsync(
-                message.Source.LedgerId!, message.EvolveId, cancellationToken);
+                prefund.LedgerId, message.EvolveId, cancellationToken);
 
             if (sourceEntryExists)
             {
                 _logger.LogWarning(
-                    "Source ledger entry already exists, skipping write. EvolveId={EvolveId} LedgerId={LedgerId}",
-                    message.EvolveId, message.Source.LedgerId);
+                    "RTPPrefund debit entry already exists, skipping. EvolveId={EvolveId} LedgerId={LedgerId}",
+                    message.EvolveId, prefund.LedgerId);
 
-                // Retrieve existing entry to get its GluId for consistent response
                 var existingEntry = await _ledgerRepository.GetEntryAsync(
-                    message.Source.LedgerId!, message.EvolveId, cancellationToken);
+                    prefund.LedgerId, message.EvolveId, cancellationToken);
                 gluIdSource = existingEntry?.GluId;
             }
             else
             {
-                var sourceLedger = await _ledgerRepository.GetLedgerAsync(
-                    message.Source.LedgerId!, cancellationToken);
+                var prefundLedger = await _ledgerRepository.GetLedgerAsync(
+                    prefund.LedgerId, cancellationToken);
 
-                if (sourceLedger is null)
+                if (prefundLedger is null)
                     throw new InvalidOperationException(
-                        $"Source ledger not found. LedgerId={message.Source.LedgerId}");
+                        $"RTPPrefund ledger document not found. LedgerId={prefund.LedgerId}");
 
-                var sourceEntry = new LedgerEntry
+                var debitEntry = new LedgerEntry
                 {
-                    LedgerId = message.Source.LedgerId!,
-                    AccountNumber = message.Source.AccountNumber,
+                    LedgerId = prefund.LedgerId,
+                    AccountNumber = prefund.AccountNumber,
                     Amount = -amount, // negative = debit
                     TransactionId = message.EvolveId,
                     Kind = "tptch.send",
@@ -86,15 +102,15 @@ public sealed class TransferService : ITransferService
                     }
                 };
 
-                var newSourceBalance = sourceLedger.LastBalance - amount;
-                var writtenSourceEntry = await _ledgerRepository.WriteEntryAsync(
-                    sourceEntry, newSourceBalance, cancellationToken);
+                var newPrefundBalance = prefundLedger.LastBalance - amount;
+                var writtenDebitEntry = await _ledgerRepository.WriteEntryAsync(
+                    debitEntry, newPrefundBalance, cancellationToken);
 
-                gluIdSource = writtenSourceEntry.GluId;
+                gluIdSource = writtenDebitEntry.GluId;
 
                 _logger.LogInformation(
-                    "Source debit written. EvolveId={EvolveId} LedgerId={LedgerId} GluId={GluId} NewBalance={NewBalance}",
-                    message.EvolveId, message.Source.LedgerId, gluIdSource, newSourceBalance);
+                    "RTPPrefund debit written. EvolveId={EvolveId} LedgerId={LedgerId} GluId={GluId} NewBalance={NewBalance}",
+                    message.EvolveId, prefund.LedgerId, gluIdSource, newPrefundBalance);
             }
         }
 
@@ -103,17 +119,16 @@ public sealed class TransferService : ITransferService
         // -------------------------------------------------------------------------
         if (_settings.WRITE_DESTINATION_CREDIT)
         {
-            // Idempotency check — was this entry already written on a previous attempt?
+            // Idempotency check
             var destinationEntryExists = await _ledgerRepository.EntryExistsAsync(
                 message.Destination.LedgerId!, message.EvolveId, cancellationToken);
 
             if (destinationEntryExists)
             {
                 _logger.LogWarning(
-                    "Destination ledger entry already exists, skipping write. EvolveId={EvolveId} LedgerId={LedgerId}",
+                    "Destination credit entry already exists, skipping. EvolveId={EvolveId} LedgerId={LedgerId}",
                     message.EvolveId, message.Destination.LedgerId);
 
-                // Retrieve existing entry to get its GluId for consistent response
                 var existingEntry = await _ledgerRepository.GetEntryAsync(
                     message.Destination.LedgerId!, message.EvolveId, cancellationToken);
                 gluIdDestination = existingEntry?.GluId;
@@ -127,7 +142,7 @@ public sealed class TransferService : ITransferService
                     throw new InvalidOperationException(
                         $"Destination ledger not found. LedgerId={message.Destination.LedgerId}");
 
-                var destinationEntry = new LedgerEntry
+                var creditEntry = new LedgerEntry
                 {
                     LedgerId = message.Destination.LedgerId!,
                     AccountNumber = message.Destination.AccountNumber,
@@ -144,10 +159,10 @@ public sealed class TransferService : ITransferService
                 };
 
                 var newDestinationBalance = destinationLedger.LastBalance + amount;
-                var writtenDestinationEntry = await _ledgerRepository.WriteEntryAsync(
-                    destinationEntry, newDestinationBalance, cancellationToken);
+                var writtenCreditEntry = await _ledgerRepository.WriteEntryAsync(
+                    creditEntry, newDestinationBalance, cancellationToken);
 
-                gluIdDestination = writtenDestinationEntry.GluId;
+                gluIdDestination = writtenCreditEntry.GluId;
 
                 _logger.LogInformation(
                     "Destination credit written. EvolveId={EvolveId} LedgerId={LedgerId} GluId={GluId} NewBalance={NewBalance}",
