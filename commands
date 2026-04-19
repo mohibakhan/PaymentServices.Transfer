@@ -1,52 +1,68 @@
-# 1. Create and enter directory
-mkdir PaymentServices.Transfer
-cd PaymentServices.Transfer
+platoform
 
-# 2. Create solution
-dotnet new sln -n PaymentServices.Transfer
+{
+    "id": "CURIO_PLATFORM_ID",
+    "pk": "CURIO_PLATFORM_ID",
+    "_type": "Platform",
+    "fintechId": "CURIO_FINTECH_ID",
+    "customerIds": [
+        "CURIO_NONIND_CUST_ID"
+    ],
+    "createdAt": "2024-01-01T00:00:00Z",
+    "updatedAt": "2024-01-01T00:00:00Z",
+    "_rid": "k8UbANkCnxwBAAAAAAAAAA==",
+    "_self": "dbs/k8UbAA==/colls/k8UbANkCnxw=/docs/k8UbANkCnxwBAAAAAAAAAA==/",
+    "_etag": "\"00007800-0000-0300-0000-69b644f80000\"",
+    "_attachments": "attachments/",
+    "_ts": 1773552888
+}
 
-# 3. Create worker project
-mkdir src
-cd src
-dotnet new worker -n PaymentServices.Transfer -f net10.0
-cd ..
+{
+    "name": {
+        "first": "Jane",
+        "last": "Smith"
+    },
+    "taxId": "123456789",
+    "parentId": "CURIO_PLATFORM_ID",
+    "accountIds": [
+        "1e9c0832-580a-4173-ad88-453358f42446"
+    ],
+    "remoteAccountIds": [
+        "a842d3b6-ba52-4629-84f3-ef2790d966ac"
+    ],
+    "id": "6569f147-7d7e-4511-b12a-f7cf7c58e05b",
+    "pk": "6569f147-7d7e-4511-b12a-f7cf7c58e05b",
+    "_type": "Customer",
+    "createdAt": "2026-03-15T07:51:42.1702782Z",
+    "updatedAt": "2026-03-15T07:51:46.4460736Z",
+    "_rid": "k8UbAJZ-8qsEAAAAAAAAAA==",
+    "_self": "dbs/k8UbAA==/colls/k8UbAJZ-8qs=/docs/k8UbAJZ-8qsEAAAAAAAAAA==/",
+    "_etag": "\"00004700-0000-0300-0000-69b665120000\"",
+    "_attachments": "attachments/",
+    "_ts": 1773561106
+}
 
-# 4. Add to solution
-dotnet sln add src/PaymentServices.Transfer.csproj
-
-# 5. Remove generated worker file
-rm src/Worker.cs
-
-# 6. Create folder structure
-cd src
-mkdir Functions Services Models Repositories
-cd ..
-
-# 7. Create deploy_parameters and pipelines
-mkdir -p deploy_parameters/DEV
-mkdir -p deploy_parameters/QA
-mkdir -p deploy_parameters/PROD
-mkdir -p pipelines
-
-# 8. Add packages
-cd src
-dotnet add package Microsoft.Azure.Functions.Worker --version 2.51.0
-dotnet add package Microsoft.Azure.Functions.Worker.Sdk --version 2.0.7
-dotnet add package Microsoft.Azure.Functions.Worker.Extensions.Http --version 3.3.0
-dotnet add package Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore --version 2.1.0
-dotnet add package Microsoft.Azure.Functions.Worker.Extensions.ServiceBus --version 5.22.0
-dotnet add package Microsoft.Extensions.Configuration.AzureAppConfiguration --version 8.0.0
-dotnet add package Azure.Identity --version 1.13.2
-dotnet add package Microsoft.Azure.Cosmos --version 3.46.0
-dotnet add package Newtonsoft.Json --version 13.0.3
-dotnet add package Azure.Messaging.ServiceBus --version 7.18.4
-dotnet add package Microsoft.ApplicationInsights --version 2.22.0
-dotnet add package Microsoft.ApplicationInsights.WorkerService --version 2.22.0
-dotnet add package Microsoft.Azure.Functions.Worker.ApplicationInsights --version 1.4.0
-dotnet add package Serilog --version 4.2.0
-dotnet add package Serilog.Extensions.Hosting --version 9.0.0
-dotnet add package Serilog.Sinks.ApplicationInsights --version 4.0.0
-dotnet add package PaymentServices.Shared --version 1.0.*
-
-# 9. Restore and build
-dotnet restore && dotnet build
+{
+    "name": {
+        "first": "John",
+        "last": "Doe"
+    },
+    "taxId": "123456789",
+    "parentId": "CURIO_PLATFORM_ID",
+    "accountIds": [
+        "8bf71fb5-7e74-473d-b5b0-f7d9d6c10472"
+    ],
+    "remoteAccountIds": [
+        "49552800-86e4-4ecf-b431-14a9110b8ae6"
+    ],
+    "id": "aa1c2a5f-ae5c-431c-870c-ca093ba8358d",
+    "pk": "aa1c2a5f-ae5c-431c-870c-ca093ba8358d",
+    "_type": "Customer",
+    "createdAt": "2026-03-15T05:48:32.6367934Z",
+    "updatedAt": "2026-03-15T05:48:57.3623924Z",
+    "_rid": "k8UbAJZ-8qsDAAAAAAAAAA==",
+    "_self": "dbs/k8UbAA==/colls/k8UbAJZ-8qs=/docs/k8UbAJZ-8qsDAAAAAAAAAA==/",
+    "_etag": "\"00004300-0000-0300-0000-69b648490000\"",
+    "_attachments": "attachments/",
+    "_ts": 1773553737
+}
