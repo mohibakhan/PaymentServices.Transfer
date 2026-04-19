@@ -1,5 +1,26 @@
- RemoteAccount not found for AccountNumber=12345678
-[2026-04-19T03:22:36.035Z] RemoteAccount not found for AccountNumber=87654321
-[2026-04-19T03:22:36.037Z] Resolution failed — RemoteAccount not found. AccountNumber=87654321
-[2026-04-19T03:22:36.038Z] Resolution failed — RemoteAccount not found. AccountNumber=12345678
-[2026-04-19T03:22:36.075Z] AccountResolution failed. EvolveId=test-evolve-001 Reason=Source account not found: 12345678
+curl -X POST http://localhost:7071/api/tptch/send \
+  -H "Content-Type: application/json" \
+  -d '{
+    "evolveId": "test-evolve-004",
+    "fintechId": "fintech-test-001",
+    "amount": "100.00",
+    "taxId": "123456789",
+    "userIsBusiness": false,
+    "sourceAccount": {
+      "accountNumber": "1234567890",
+      "routingNumber": "084009593",
+      "name": { "first": "John", "last": "Doe" }
+    },
+    "destinationAccount": {
+      "accountNumber": "9876543210",
+      "routingNumber": "084009593",
+      "name": { "first": "Jane", "last": "Doe" },
+      "address": {
+        "addressLines": ["6070 Polar Ave STE 100"],
+        "city": "Memphis",
+        "stateCode": "TN",
+        "postalCode": "38119",
+        "countryISOCode": "US"
+      }
+    }
+  }'
