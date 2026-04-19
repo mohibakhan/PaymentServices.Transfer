@@ -1,26 +1,158 @@
-curl -X POST http://localhost:7071/api/tptch/send \
-  -H "Content-Type: application/json" \
-  -d '{
-    "evolveId": "test-evolve-004",
-    "fintechId": "fintech-test-001",
-    "amount": "100.00",
-    "taxId": "123456789",
-    "userIsBusiness": false,
-    "sourceAccount": {
-      "accountNumber": "1234567890",
-      "routingNumber": "084009593",
-      "name": { "first": "John", "last": "Doe" }
+{
+    "id": "b25b4a30-28fd-4529-893e-567fb8dc7261",
+    "LedgerId": "b02c9502-0fa0-4ecd-98f1-ae5cfcacf687",
+    "AccountNumber": "9876543210",
+    "Amount": 100,
+    "GluId": "0b159c79-0cbf-44f1-9ce4-c4d600f0e048",
+    "TransactionId": "test-evolve-004",
+    "Kind": "tptch.send",
+    "Status": "Completed",
+    "Metadata": {
+        "postedAt": "2026-04-19T03:30:10.5624616Z",
+        "correlationId": "5e6804bf-7605-4c8a-bb78-c0f14531bdaa",
+        "evolveId": "test-evolve-004"
     },
-    "destinationAccount": {
-      "accountNumber": "9876543210",
-      "routingNumber": "084009593",
-      "name": { "first": "Jane", "last": "Doe" },
-      "address": {
-        "addressLines": ["6070 Polar Ave STE 100"],
-        "city": "Memphis",
-        "stateCode": "TN",
-        "postalCode": "38119",
-        "countryISOCode": "US"
-      }
+    "CreatedAt": "2026-04-19T03:30:10.5010649Z",
+    "_rid": "uTljAJY3Gg8KAAAAAAAAAA==",
+    "_self": "dbs/uTljAA==/colls/uTljAJY3Gg8=/docs/uTljAJY3Gg8KAAAAAAAAAA==/",
+    "_etag": "\"080094ee-0000-0300-0000-69e44c430000\"",
+    "_attachments": "attachments/",
+    "_ts": 1776569411
+}
+
+{
+    "id": "90f226c2-2b7d-4513-983d-51aca526b9b9",
+    "LedgerId": "3ec0640d-9d4d-4358-b8ee-9080d8554173",
+    "AccountNumber": "9990000001",
+    "Amount": -100,
+    "GluId": "e21d811d-7ad3-4cb6-a374-7959d63959e3",
+    "TransactionId": "test-evolve-004",
+    "Kind": "tptch.send",
+    "Status": "Completed",
+    "Metadata": {
+        "postedAt": "2026-04-19T03:30:00.8878304Z",
+        "correlationId": "5e6804bf-7605-4c8a-bb78-c0f14531bdaa",
+        "evolveId": "test-evolve-004"
+    },
+    "CreatedAt": "2026-04-19T03:30:00.8469003Z",
+    "_rid": "uTljAJY3Gg8JAAAAAAAAAA==",
+    "_self": "dbs/uTljAA==/colls/uTljAJY3Gg8=/docs/uTljAJY3Gg8JAAAAAAAAAA==/",
+    "_etag": "\"08007eed-0000-0300-0000-69e44c390000\"",
+    "_attachments": "attachments/",
+    "_ts": 1776569401
+}
+
+and these are all the ledgers
+[
+    {
+        "id": "d03d031e-6377-40e9-9b95-3ba7b0c5a104",
+        "AccountNumber": "1234567890",
+        "Currency": {
+            "Name": "USD",
+            "Symbol": "USD",
+            "BaseUnit": "Cent",
+            "Decimals": 2
+        },
+        "LastBalance": -100,
+        "Metadata": {
+            "accountId": "1234567890"
+        },
+        "CreatedAt": "2026-03-23T22:03:52.1715029Z",
+        "UpdatedAt": "2026-04-19T02:54:30.4280525Z",
+        "LedgerType": "prefund-ledger-v2",
+        "_rid": "uTljALtChTABAAAAAAAAAA==",
+        "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTABAAAAAAAAAA==/",
+        "_etag": "\"0300eb15-0000-0300-0000-69e443e60000\"",
+        "_attachments": "attachments/",
+        "_ts": 1776567270
+    },
+    {
+        "id": "b02c9502-0fa0-4ecd-98f1-ae5cfcacf687",
+        "AccountNumber": "9876543210",
+        "Currency": {
+            "Name": "USD",
+            "Symbol": "USD",
+            "BaseUnit": "Cent",
+            "Decimals": 2
+        },
+        "LastBalance": 200,
+        "Metadata": {
+            "accountId": "9876543210"
+        },
+        "CreatedAt": "2026-03-23T22:04:24.3416849Z",
+        "UpdatedAt": "2026-04-19T03:30:11.7858405Z",
+        "LedgerType": "prefund-ledger-v2",
+        "_rid": "uTljALtChTACAAAAAAAAAA==",
+        "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTACAAAAAAAAAA==/",
+        "_etag": "\"0300bd22-0000-0300-0000-69e44c430000\"",
+        "_attachments": "attachments/",
+        "_ts": 1776569411
+    },
+    {
+        "AccountNumber": "9990000001",
+        "Currency": {
+            "Name": "USD",
+            "Symbol": "USD",
+            "BaseUnit": "Cent",
+            "Decimals": 2
+        },
+        "LastBalance": 9450,
+        "Metadata": {
+            "accountId": "9990000001"
+        },
+        "LedgerType": "prefund-ledger-v2",
+        "id": "3ec0640d-9d4d-4358-b8ee-9080d8554173",
+        "CreatedAt": "2026-03-23T21:57:46.8768894Z",
+        "UpdatedAt": "2026-04-19T03:30:01.9739312Z",
+        "_rid": "uTljALtChTADAAAAAAAAAA==",
+        "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTADAAAAAAAAAA==/",
+        "_etag": "\"0300b522-0000-0300-0000-69e44c3a0000\"",
+        "_attachments": "attachments/",
+        "_ts": 1776569402
+    },
+    {
+        "id": "52db98fa-c106-4422-962f-d299144fd6fc",
+        "AccountNumber": "123123123",
+        "Currency": {
+            "Name": "USD",
+            "Symbol": "USD",
+            "BaseUnit": "Cent",
+            "Decimals": 2
+        },
+        "LastBalance": 150,
+        "Metadata": {
+            "accountId": "123123123"
+        },
+        "CreatedAt": "2026-03-23T21:41:21.5441683Z",
+        "UpdatedAt": "2026-03-26T03:54:06.0525727Z",
+        "LedgerType": "prefund-ledger-v2",
+        "_rid": "uTljALtChTAEAAAAAAAAAA==",
+        "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTAEAAAAAAAAAA==/",
+        "_etag": "\"2901dc4b-0000-0300-0000-69cc5fe10000\"",
+        "_attachments": "attachments/",
+        "_ts": 1775001569
+    },
+    {
+        "id": "15541990-c0b2-4731-9093-c85282cc0479",
+        "AccountNumber": "9876543211",
+        "Currency": {
+            "Name": "USD",
+            "Symbol": "USD",
+            "BaseUnit": "Cent",
+            "Decimals": 2
+        },
+        "LastBalance": 0,
+        "Metadata": {
+            "accountId": "9876543211"
+        },
+        "CreatedAt": "2026-03-26T03:57:18.7561114Z",
+        "UpdatedAt": "2026-03-26T03:57:18.7561115Z",
+        "LedgerType": "prefund-ledger-v2",
+        "_rid": "uTljALtChTAFAAAAAAAAAA==",
+        "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTAFAAAAAAAAAA==/",
+        "_etag": "\"2901dd4b-0000-0300-0000-69cc5fe10000\"",
+        "_attachments": "attachments/",
+        "_ts": 1775001569
     }
-  }'
+]
+
