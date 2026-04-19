@@ -1,0 +1,52 @@
+# 1. Create and enter directory
+mkdir PaymentServices.Transfer
+cd PaymentServices.Transfer
+
+# 2. Create solution
+dotnet new sln -n PaymentServices.Transfer
+
+# 3. Create worker project
+mkdir src
+cd src
+dotnet new worker -n PaymentServices.Transfer -f net10.0
+cd ..
+
+# 4. Add to solution
+dotnet sln add src/PaymentServices.Transfer.csproj
+
+# 5. Remove generated worker file
+rm src/Worker.cs
+
+# 6. Create folder structure
+cd src
+mkdir Functions Services Models Repositories
+cd ..
+
+# 7. Create deploy_parameters and pipelines
+mkdir -p deploy_parameters/DEV
+mkdir -p deploy_parameters/QA
+mkdir -p deploy_parameters/PROD
+mkdir -p pipelines
+
+# 8. Add packages
+cd src
+dotnet add package Microsoft.Azure.Functions.Worker --version 2.51.0
+dotnet add package Microsoft.Azure.Functions.Worker.Sdk --version 2.0.7
+dotnet add package Microsoft.Azure.Functions.Worker.Extensions.Http --version 3.3.0
+dotnet add package Microsoft.Azure.Functions.Worker.Extensions.Http.AspNetCore --version 2.1.0
+dotnet add package Microsoft.Azure.Functions.Worker.Extensions.ServiceBus --version 5.22.0
+dotnet add package Microsoft.Extensions.Configuration.AzureAppConfiguration --version 8.0.0
+dotnet add package Azure.Identity --version 1.13.2
+dotnet add package Microsoft.Azure.Cosmos --version 3.46.0
+dotnet add package Newtonsoft.Json --version 13.0.3
+dotnet add package Azure.Messaging.ServiceBus --version 7.18.4
+dotnet add package Microsoft.ApplicationInsights --version 2.22.0
+dotnet add package Microsoft.ApplicationInsights.WorkerService --version 2.22.0
+dotnet add package Microsoft.Azure.Functions.Worker.ApplicationInsights --version 1.4.0
+dotnet add package Serilog --version 4.2.0
+dotnet add package Serilog.Extensions.Hosting --version 9.0.0
+dotnet add package Serilog.Sinks.ApplicationInsights --version 4.0.0
+dotnet add package PaymentServices.Shared --version 1.0.*
+
+# 9. Restore and build
+dotnet restore && dotnet build
