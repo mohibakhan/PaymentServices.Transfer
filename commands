@@ -1,22 +1,30 @@
 {
-    "AccountNumber": "9990000001",
-    "Currency": {
-        "Name": "USD",
-        "Symbol": "USD",
-        "BaseUnit": "Cent",
-        "Decimals": 2
+    "evolveId": "test-evolve-002",
+    "fintechId": "fintech-test-001",
+    "amount": "100.00",
+    "taxId": "123456789",
+    "userIsBusiness": false,
+    "sourceAccount": {
+      "accountNumber": "1234567890",
+      "routingNumber": "084009593",
+      "name": {
+        "first": "John",
+        "last": "Doe"
+      }
     },
-    "LastBalance": 9550,
-    "Metadata": {
-        "accountId": "9990000001"
-    },
-    "LedgerType": "prefund-ledger-v2",
-    "id": "3ec0640d-9d4d-4358-b8ee-9080d8554173",
-    "CreatedAt": "2026-03-23T21:57:46.8768894Z",
-    "UpdatedAt": "2026-03-26T02:55:30.6295673Z",
-    "_rid": "uTljALtChTADAAAAAAAAAA==",
-    "_self": "dbs/uTljAA==/colls/uTljALtChTA=/docs/uTljALtChTADAAAAAAAAAA==/",
-    "_etag": "\"2901db4b-0000-0300-0000-69cc5fe10000\"",
-    "_attachments": "attachments/",
-    "_ts": 1775001569
-}
+    "destinationAccount": {
+      "accountNumber": "9876543210",
+      "routingNumber": "084009593",
+      "name": {
+        "first": "Jane",
+        "last": "Doe"
+      },
+      "address": {
+        "addressLines": ["6070 Polar Ave STE 100"],
+        "city": "Memphis",
+        "stateCode": "TN",
+        "postalCode": "38119",
+        "countryISOCode": "US"
+      }
+    }
+  }
