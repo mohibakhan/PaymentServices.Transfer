@@ -1,0 +1,32 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+
+    "APPINSIGHTS_INSTRUMENTATIONKEY": "<local-app-insights-key>",
+    "APPLICATIONINSIGHTS_CONNECTION_STRING": "<local-app-insights-connection-string>",
+
+    "app:AppSettings:COSMOS_ENDPOINT": "<cosmos-account-endpoint>",
+    "app:AppSettings:COSMOS_CONNSTRING": "<local-cosmos-connection-string>",
+    "app:AppSettings:COSMOS_DATABASE": "tptch",
+    "app:AppSettings:COSMOS_TRANSACTIONS_CONTAINER": "tchSendTransactions",
+    "app:AppSettings:COSMOS_PLATFORMS_CONTAINER": "platforms",
+    "app:AppSettings:COSMOS_CUSTOMERS_CONTAINER": "customers",
+    "app:AppSettings:COSMOS_ACCOUNTS_CONTAINER": "accounts",
+
+    "app:AppSettings:COSMOS_LEDGER_DATABASE": "ledgers",
+    "app:AppSettings:COSMOS_LEDGER_CONTAINER": "ledgers",
+    "app:AppSettings:COSMOS_LEDGER_ENTRIES_CONTAINER": "ledgerEntries",
+
+    "app:AppSettings:SERVICE_BUS_CONNSTRING": "<service-bus-connection-string>",
+    "app:AppSettings:SERVICE_BUS_TOPIC": "payment-processing",
+    "app:AppSettings:SERVICE_BUS_TRANSFER_SUBSCRIPTION": "transfer",
+
+    "app:AppSettings:WRITE_SOURCE_DEBIT": "true",
+    "app:AppSettings:WRITE_DESTINATION_CREDIT": "true",
+
+    "telemetry:APP_INSIGHTS_CUSTOM_PROP_EVOLVE_TRAIN": "Digital",
+    "telemetry:APP_INSIGHTS_CUSTOM_PROP_EVOLVE_TEAM": "Services"
+  }
+}

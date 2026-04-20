@@ -1,0 +1,13 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "functionAppName": { "value": "PaymentServicesTransfer-QA" },
+    "location": { "value": "eastus" },
+    "appConfigEndpoint": { "value": "https://payment-services-config-qa.azconfig.io" },
+    "managedIdentityClientId": { "value": "<qa-managed-identity-client-id>" },
+    "cosmosEndpoint": { "value": "https://cosmos-paymentservices-qa-centralus.documents.azure.com:443/" },
+    "environment": { "value": "QA" },
+    "tags": { "value": { "Environment": "QA", "Service": "PaymentServices.Transfer", "Team": "Services", "Train": "Digital" } }
+  }
+}
