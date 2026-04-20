@@ -1,7 +1,9 @@
-using System.Collections.Concurrent;
 using Microsoft.Azure.Cosmos;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using PaymentServices.Transfer.Models;
+using System.Collections.Concurrent;
+using CosmosContainer = Microsoft.Azure.Cosmos.Container;
 
 namespace PaymentServices.Transfer.Repositories;
 
@@ -25,9 +27,9 @@ public interface IPrefundRepository
 
 public sealed class PrefundRepository : IPrefundRepository
 {
-    private readonly Container _platformsContainer;
-    private readonly Container _customersContainer;
-    private readonly Container _accountsContainer;
+    private readonly CosmosContainer _platformsContainer;
+    private readonly CosmosContainer _customersContainer;
+    private readonly CosmosContainer _accountsContainer;
     private readonly ILogger<PrefundRepository> _logger;
 
     /// <summary>
@@ -40,9 +42,9 @@ public sealed class PrefundRepository : IPrefundRepository
         _cache = new(StringComparer.OrdinalIgnoreCase);
 
     public PrefundRepository(
-        [FromKeyedServices("platforms")] Container platformsContainer,
-        [FromKeyedServices("customers")] Container customersContainer,
-        [FromKeyedServices("accounts")] Container accountsContainer,
+        [FromKeyedServices("platforms")] CosmosContainer platformsContainer,
+        [FromKeyedServices("customers")] CosmosContainer customersContainer,
+        [FromKeyedServices("accounts")] CosmosContainer accountsContainer,
         ILogger<PrefundRepository> logger)
     {
         _platformsContainer = platformsContainer;
