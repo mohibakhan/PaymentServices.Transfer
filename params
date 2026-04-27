@@ -1,0 +1,25 @@
+{
+  "telemetry:APP_INSIGHTS-CUSTOM_PROP_EVOLVE_TRAIN": "Digital",
+  "telemetry:APP_INSIGHTS-CUSTOM_PROP_EVOLVE_TEAM": "Services",
+  "transfer:AppSettings:COSMOS_DATABASE": "tptch",
+  "transfer:AppSettings:COSMOS_TRANSACTIONS_CONTAINER": "tchSendTransactions",
+  "transfer:AppSettings:COSMOS_PLATFORMS_CONTAINER": "platforms",
+  "transfer:AppSettings:COSMOS_CUSTOMERS_CONTAINER": "customers",
+  "transfer:AppSettings:COSMOS_ACCOUNTS_CONTAINER": "accounts",
+  "transfer:AppSettings:COSMOS_LEDGER_DATABASE": "ledgers",
+  "transfer:AppSettings:COSMOS_LEDGER_CONTAINER": "ledgers",
+  "transfer:AppSettings:COSMOS_LEDGER_ENTRIES_CONTAINER": "ledgerEntries",
+  "transfer:AppSettings:SERVICE_BUS_TOPIC": "payment-processing",
+  "transfer:AppSettings:SERVICE_BUS_TRANSFER_SUBSCRIPTION": "transfer",
+  "transfer:AppSettings:WRITE_SOURCE_DEBIT": "true",
+  "transfer:AppSettings:WRITE_DESTINATION_CREDIT": "true"
+}
+
+{
+  "transfer:AppSettings:COSMOS_CONNSTRING": {
+    "uri": "https://kv-pmtsvc-dev-centralus.vault.azure.net/secrets/TRANSFER-COSMOS-CONNSTRING"
+  },
+  "transfer:AppSettings:SERVICE_BUS_CONNSTRING": {
+    "uri": "https://kv-pmtsvc-dev-centralus.vault.azure.net/secrets/TRANSFER-SERVICE-BUS-CONNSTRING"
+  }
+}
