@@ -1,8 +1,7 @@
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using PaymentServices.Shared.Messages;
+using PaymentServices.Transfer.Exceptions;
 using PaymentServices.Transfer.Models;
-using PaymentServices.Transfer.Repositories;
 
 namespace PaymentServices.Transfer.Services;
 
@@ -13,22 +12,32 @@ public interface ITransferService
         CancellationToken cancellationToken = default);
 }
 
+/// <summary>
+/// Runs the checks for a transfer:
+///   1. LIMIT check (mock)
+///   2. SCREENING check (mock)
+///   3. LEDGER source debit via the Evolve NuGet (NSF terminal)
+///
+/// Ledger logic mirrors the former RTPSend EvolveLedgerService — resolve the
+/// source ledger by account number, NSF-check, post one negative debit entry.
+/// Destination credit is intentionally NOT performed (source debit only).
+/// </summary>
 public sealed class TransferService : ITransferService
 {
-    private readonly ILedgerRepository _ledgerRepository;
-    private readonly IPrefundRepository _prefundRepository;
-    private readonly TransferSettings _settings;
+    private readonly ILimitService _limitService;
+    private readonly IScreeningService _screeningService;
+    private readonly ILedgerService _ledgerService;
     private readonly ILogger<TransferService> _logger;
 
     public TransferService(
-        ILedgerRepository ledgerRepository,
-        IPrefundRepository prefundRepository,
-        IOptions<TransferSettings> settings,
+        ILimitService limitService,
+        IScreeningService screeningService,
+        ILedgerService ledgerService,
         ILogger<TransferService> logger)
     {
-        _ledgerRepository = ledgerRepository;
-        _prefundRepository = prefundRepository;
-        _settings = settings.Value;
+        _limitService = limitService;
+        _screeningService = screeningService;
+        _ledgerService = ledgerService;
         _logger = logger;
     }
 
@@ -36,145 +45,63 @@ public sealed class TransferService : ITransferService
         PaymentMessage message,
         CancellationToken cancellationToken = default)
     {
-        var amount = decimal.Parse(message.Amount);
-        string? gluIdSource = null;
-        string? gluIdDestination = null;
-
         _logger.LogInformation(
             "Transfer executing. EvolveId={EvolveId} Amount={Amount} FintechId={FintechId}",
-            message.EvolveId, amount, message.FintechId);
+            message.EvolveId, message.Amount, message.FintechId);
 
-        // -------------------------------------------------------------------------
-        // Resolve RTPPrefund ledger from fintechId
-        // -------------------------------------------------------------------------
-        var prefund = await _prefundRepository.ResolvePrefundLedgerAsync(
-            message.FintechId, cancellationToken);
+        // ---- LIMIT --------------------------------------------------------
+        var limit = await _limitService.CheckAsync(message, cancellationToken);
+        if (!limit.Allowed)
+        {
+            throw new LimitExceededException(limit.Reason ?? "Limit check denied");
+        }
 
-        if (prefund is null)
+        // ---- SCREENING ----------------------------------------------------
+        var screening = await _screeningService.CheckAsync(message, cancellationToken);
+        if (!screening.Allowed)
+        {
+            throw new ScreeningRejectedException(screening.Reason ?? "Screening rejected");
+        }
+
+        // ---- LEDGER (source debit) ---------------------------------------
+        // NSF throws InsufficientFundsException (terminal). Other failures
+        // return a Failed result which we turn into a retryable exception.
+        var ledgerResult = await _ledgerService.ReserveAsync(new LedgerReservationRequest
+        {
+            EvolveId = message.EvolveId,
+            FintechId = message.FintechId,
+            CorrelationId = message.CorrelationId,
+            SourceAccountNumber = message.Source.AccountNumber,
+            Amount = message.Amount
+        }, cancellationToken);
+
+        if (!ledgerResult.Success)
+        {
             throw new InvalidOperationException(
-                $"RTPPrefund account not found for FintechId={message.FintechId}");
+                ledgerResult.Reason ?? "Ledger reservation failed");
+        }
 
         _logger.LogInformation(
-            "RTPPrefund resolved. EvolveId={EvolveId} PrefundLedgerId={PrefundLedgerId} AccountNumber={AccountNumber}",
-            message.EvolveId, prefund.LedgerId, prefund.AccountNumber);
-
-        // -------------------------------------------------------------------------
-        // Debit RTPPrefund ledger
-        // -------------------------------------------------------------------------
-        if (_settings.WRITE_SOURCE_DEBIT)
-        {
-            // Idempotency check
-            var sourceEntryExists = await _ledgerRepository.EntryExistsAsync(
-                prefund.LedgerId, message.EvolveId, cancellationToken);
-
-            if (sourceEntryExists)
-            {
-                _logger.LogWarning(
-                    "RTPPrefund debit entry already exists, skipping. EvolveId={EvolveId} LedgerId={LedgerId}",
-                    message.EvolveId, prefund.LedgerId);
-
-                var existingEntry = await _ledgerRepository.GetEntryAsync(
-                    prefund.LedgerId, message.EvolveId, cancellationToken);
-                gluIdSource = existingEntry?.GluId;
-            }
-            else
-            {
-                var prefundLedger = await _ledgerRepository.GetLedgerAsync(
-                    prefund.LedgerId, cancellationToken);
-
-                if (prefundLedger is null)
-                    throw new InvalidOperationException(
-                        $"RTPPrefund ledger document not found. LedgerId={prefund.LedgerId}");
-
-                var debitEntry = new LedgerEntry
-                {
-                    LedgerId = prefund.LedgerId,
-                    AccountNumber = prefund.AccountNumber,
-                    Amount = -amount, // negative = debit
-                    TransactionId = message.EvolveId,
-                    Kind = "tptch.send",
-                    Status = "Completed",
-                    Metadata = new LedgerEntryMetadata
-                    {
-                        PostedAt = DateTime.UtcNow,
-                        CorrelationId = message.CorrelationId,
-                        EvolveId = message.EvolveId
-                    }
-                };
-
-                var newPrefundBalance = prefundLedger.LastBalance - amount;
-                var writtenDebitEntry = await _ledgerRepository.WriteEntryAsync(
-                    debitEntry, newPrefundBalance, cancellationToken);
-
-                gluIdSource = writtenDebitEntry.GluId;
-
-                _logger.LogInformation(
-                    "RTPPrefund debit written. EvolveId={EvolveId} LedgerId={LedgerId} GluId={GluId} NewBalance={NewBalance}",
-                    message.EvolveId, prefund.LedgerId, gluIdSource, newPrefundBalance);
-            }
-        }
-
-        // -------------------------------------------------------------------------
-        // Credit destination ledger
-        // -------------------------------------------------------------------------
-        if (_settings.WRITE_DESTINATION_CREDIT)
-        {
-            // Idempotency check
-            var destinationEntryExists = await _ledgerRepository.EntryExistsAsync(
-                message.Destination.LedgerId!, message.EvolveId, cancellationToken);
-
-            if (destinationEntryExists)
-            {
-                _logger.LogWarning(
-                    "Destination credit entry already exists, skipping. EvolveId={EvolveId} LedgerId={LedgerId}",
-                    message.EvolveId, message.Destination.LedgerId);
-
-                var existingEntry = await _ledgerRepository.GetEntryAsync(
-                    message.Destination.LedgerId!, message.EvolveId, cancellationToken);
-                gluIdDestination = existingEntry?.GluId;
-            }
-            else
-            {
-                var destinationLedger = await _ledgerRepository.GetLedgerAsync(
-                    message.Destination.LedgerId!, cancellationToken);
-
-                if (destinationLedger is null)
-                    throw new InvalidOperationException(
-                        $"Destination ledger not found. LedgerId={message.Destination.LedgerId}");
-
-                var creditEntry = new LedgerEntry
-                {
-                    LedgerId = message.Destination.LedgerId!,
-                    AccountNumber = message.Destination.AccountNumber,
-                    Amount = amount, // positive = credit
-                    TransactionId = message.EvolveId,
-                    Kind = "tptch.send",
-                    Status = "Completed",
-                    Metadata = new LedgerEntryMetadata
-                    {
-                        PostedAt = DateTime.UtcNow,
-                        CorrelationId = message.CorrelationId,
-                        EvolveId = message.EvolveId
-                    }
-                };
-
-                var newDestinationBalance = destinationLedger.LastBalance + amount;
-                var writtenCreditEntry = await _ledgerRepository.WriteEntryAsync(
-                    creditEntry, newDestinationBalance, cancellationToken);
-
-                gluIdDestination = writtenCreditEntry.GluId;
-
-                _logger.LogInformation(
-                    "Destination credit written. EvolveId={EvolveId} LedgerId={LedgerId} GluId={GluId} NewBalance={NewBalance}",
-                    message.EvolveId, message.Destination.LedgerId, gluIdDestination, newDestinationBalance);
-            }
-        }
+            "Transfer ledger debit complete. EvolveId={EvolveId} LedgerEntryId={LedgerEntryId}",
+            message.EvolveId, ledgerResult.ReservationId);
 
         return new TransferResult
         {
-            GluIdSource = gluIdSource,
-            GluIdDestination = gluIdDestination,
+            GluIdSource = ledgerResult.ReservationId,
+            GluIdDestination = null,           // source debit only
             EveTransactionId = message.EvolveId
         };
     }
+}
+
+/// <summary>Terminal — limit check denied the transfer.</summary>
+public sealed class LimitExceededException : Exception
+{
+    public LimitExceededException(string message) : base(message) { }
+}
+
+/// <summary>Terminal — screening/compliance rejected the transfer.</summary>
+public sealed class ScreeningRejectedException : Exception
+{
+    public ScreeningRejectedException(string message) : base(message) { }
 }
